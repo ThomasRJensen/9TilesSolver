@@ -30,5 +30,5 @@ Pos(2,0): id=8 [ Green/Bottom, Purple/Bottom, Blue/Top, Yellow/Top ]
 Pos(2,1): id=4 [ Blue/Bottom, Yellow/Bottom, Green/Top, Purple/Top ]  
 Pos(2,2): id=1 [ Blue/Bottom, Purple/Bottom, Blue/Top, Yellow/Top ]  
   
-Elapsed time: 7 ms
+Elapsed time: 98 microseconds
 ```

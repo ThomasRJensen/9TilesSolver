@@ -1,6 +1,20 @@
 # 9TilesSolver
+
+## Billede af de 9 brikker (ikke placeret korrekt)
 ![9tiles](https://github.com/user-attachments/assets/2d032850-7560-45f3-b6bb-c7db779c07df)
 
+## Compilering og kørsel af programmet  
+  
+### Option 1: Online (copy/paste koden)
+https://www.programiz.com/cpp-programming/online-compiler/  
+  
+### Option 2: På Linux
+```
+g++ -std=c++17 main.cpp -O2 -o tile_solver
+./tile_solver
+```
+
+## Output fra kørsel af programmet
 ```
 Løsning fundet (hver brik: Pos(row,col): id [top,right,bottom,left] : color/part):  
   

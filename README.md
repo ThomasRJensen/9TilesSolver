@@ -14,7 +14,7 @@ g++ -std=c++17 main.cpp -O2 -o tile_solver
 ./tile_solver
 ```
 
-## Output fra kørsel af programmet
+## Output fra kørsel af programmet (via Actions i GitHub)
 ```
 Løsning fundet (hver brik: Pos(row,col): id [top,right,bottom,left] : color/part):  
   
@@ -30,5 +30,5 @@ Pos(2,0): id=8 [ Green/Bottom, Purple/Bottom, Blue/Top, Yellow/Top ]
 Pos(2,1): id=4 [ Blue/Bottom, Yellow/Bottom, Green/Top, Purple/Top ]  
 Pos(2,2): id=1 [ Blue/Bottom, Purple/Bottom, Blue/Top, Yellow/Top ]  
   
-Elapsed time: 98 microseconds
+Elapsed time: 39 microseconds
 ```

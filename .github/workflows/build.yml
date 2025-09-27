@@ -1,0 +1,20 @@
+name: Build C++ Program
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y g++
+    - name: Build
+      run: g++ -o tile_solver main.cpp
+    - name: Run
+      run: ./tile_solver

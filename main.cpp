@@ -28,8 +28,9 @@ struct Tile
     }
 };
 
-static const int N = 3; // Tiles 3x3
-Tile tiles[N * N] =
+static const int N = 3;
+static const int NumberOfTiles = N * N; // Tiles 3x3
+Tile tiles[NumberOfTiles] =
 {
     {0, {{Color::Purple, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Yellow, Part::Top}, {Color::Green, Part::Bottom}}}, // Tile 0 (0,0 on picture)
     {1, {{Color::Purple, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Yellow, Part::Top}, {Color::Blue, Part::Bottom}}}, // Tile 1 (1,0 on picture)
@@ -42,7 +43,7 @@ Tile tiles[N * N] =
     {8, {{Color::Purple, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Yellow, Part::Top}, {Color::Green, Part::Bottom}}} // Tile 8 (2,2 on picture)
 };
 
-bool used[N * N] = { false };
+bool used[NumberOfTiles] = { false };
 Tile placed[N][N];
 
 bool matchEdges(const Edge& a, const Edge& b)
@@ -70,16 +71,16 @@ std::string partToString(Part p)
 
 bool backtrack(int pos)
 {
-    if (pos == N * N) return true;
+    if (pos == NumberOfTiles) return true;
     int row = pos / N;
     int col = pos % N;
 
-    for (int i = 0; i < 9; ++i)
+    for (int i = 0; i < NumberOfTiles; ++i)
     {
         if (used[i]) continue;
 
         // Try all 4 rotations
-        for (int rot = 0; rot < 4; ++rot)
+        for (int rot = 0; rot < Tile::NoOfEdges; ++rot)
         {
             bool ok = true;
             // Check left neighbor
@@ -137,7 +138,7 @@ int main()
                 for (int edge = 0; edge < tile.NoOfEdges; ++edge)
                 {
                     std::cout << colorToString(tile.edges[edge].color) << "/" << partToString(tile.edges[edge].part);
-                    if (edge < 3)
+                    if (edge < tile.NoOfEdges-1) // Don't set comma for last edge
                     {
                         std::cout << ", ";
                     }
@@ -153,7 +154,7 @@ int main()
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
-    std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms\n";
+    std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds\n";
 
     return 0;
 }

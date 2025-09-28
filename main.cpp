@@ -38,10 +38,10 @@ struct Tile
     Edge edges[NoOfEdges];
     Rotation rotation = Rotation::_0CW;
 
-    void rotate90cw()
+    inline void rotate90cw()
     {
-        //rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) % NoOfEdges));
-        rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) & NoOfEdges - 1));
+        rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) % NoOfEdges));
+        //rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) & NoOfEdges - 1)); // Requires array to be power of 2 (which it is)
     }
 
     static constexpr int rotatedIndex[NoOfRotations][NoOfEdges] =
@@ -52,7 +52,7 @@ struct Tile
         {1,2,3,0} //Rotation=3
     };
 
-    const Edge& getEdge(EdgeDirection direction) const
+    inline const Edge& getEdge(EdgeDirection direction) const
     {
         return edges[rotatedIndex[static_cast<int>(rotation)][static_cast<int>(direction)]];       
     }
@@ -76,7 +76,7 @@ Tile tiles[NumberOfTiles] =
 bool used[NumberOfTiles] = { false };
 Tile placed[N][N];
 
-bool matchEdges(const Edge& a, const Edge& b)
+inline bool matchEdges(const Edge& a, const Edge& b)
 {
     // Match: same color, opposite part (Top vs Bottom)
     return (a.color == b.color) && (a.part != b.part);
@@ -99,7 +99,7 @@ std::string partToString(Part p)
     return (p == Part::Top) ? "Top" : "Bottom";
 }
 
-bool backtrack(int pos)
+inline bool backtrack(int pos)
 {
     if (pos == NumberOfTiles)
     {

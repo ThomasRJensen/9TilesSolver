@@ -40,7 +40,8 @@ struct Tile
 
     void rotate90cw()
     {
-        rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) % NoOfEdges));
+        //rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) % NoOfEdges));
+        rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) & NoOfEdges - 1));
     }
 
     static constexpr int rotatedIndex[NoOfRotations][NoOfEdges] =
@@ -53,7 +54,7 @@ struct Tile
 
     const Edge& getEdge(EdgeDirection direction) const
     {
-        return edges[rotatedIndex[static_cast<int>(rotation)][static_cast<int>(direction)]];
+        return edges[rotatedIndex[static_cast<int>(rotation)][static_cast<int>(direction)]];       
     }
 };
 

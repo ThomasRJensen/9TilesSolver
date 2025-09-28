@@ -86,10 +86,10 @@ std::string colorToString(Color c)
 {
     switch (c)
     {
-        case Color::Yellow: return "Yellow";
-        case Color::Green: return "Green";
-        case Color::Blue: return "Blue";
-        case Color::Purple: return "Purple";
+    case Color::Yellow: return "Yellow";
+    case Color::Green: return "Green";
+    case Color::Blue: return "Blue";
+    case Color::Purple: return "Purple";
     }
     return "?";
 }
@@ -173,7 +173,7 @@ int main()
                 for (int edge = 0; edge < tile.NoOfEdges; ++edge)
                 {
                     std::cout << colorToString(tile.edges[edge].color) << "/" << partToString(tile.edges[edge].part);
-                    if (edge < tile.NoOfEdges-1) // Don't set comma after last edge
+                    if (edge < tile.NoOfEdges - 1) // Don't set comma after last edge
                     {
                         std::cout << ", ";
                     }
@@ -187,7 +187,6 @@ int main()
     {
         std::cout << "No solution found with the given tiles.\n";
     }
-
 
     std::cout << "Elapsed time for algorithm: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds\n";
 

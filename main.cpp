@@ -13,16 +13,7 @@ struct Edge
 
 struct Tile
 {
-    enum class Rotation : int
-    {
-        _0CW = 0,
-        _90CW = 1,
-        _180CW = 2,
-        _270CW = 3,
-        Max = 4
-    };
-
-    enum class EdgeDirection : int
+    enum class EdgeDirection
     {
         Top = 0,
         Right = 1,
@@ -31,29 +22,18 @@ struct Tile
         Max = 4 // Number of edge directions
     };
 
-    static const int NoOfRotations = static_cast<const int>(Rotation::Max);
     static const int NoOfEdges = static_cast<const int>(EdgeDirection::Max);
 
     int id;
     Edge edges[NoOfEdges];
-    Rotation rotation = Rotation::_0CW;
 
     void rotate90cw()
     {
-        rotation = static_cast<Rotation>(((static_cast<int>(rotation) + 1) % NoOfEdges));
-    }
-
-    static constexpr int rotatedIndex[NoOfRotations][NoOfEdges] =
-    {
-        {0,1,2,3}, //Rotation=0
-        {3,0,1,2}, //Rotation=1
-        {2,3,0,1}, //Rotation=2
-        {1,2,3,0} //Rotation=3
-    };
-
-    const Edge& getEdge(EdgeDirection direction) const
-    {
-        return edges[rotatedIndex[static_cast<int>(rotation)][static_cast<int>(direction)]];
+        Edge tmp = edges[static_cast<const int>(EdgeDirection::Left)];
+        edges[static_cast<const int>(EdgeDirection::Left)] = edges[static_cast<const int>(EdgeDirection::Bottom)];
+        edges[static_cast<const int>(EdgeDirection::Bottom)] = edges[static_cast<const int>(EdgeDirection::Right)];
+        edges[static_cast<const int>(EdgeDirection::Right)] = edges[static_cast<const int>(EdgeDirection::Top)];
+        edges[static_cast<const int>(EdgeDirection::Top)] = tmp;
     }
 };
 
@@ -85,10 +65,10 @@ std::string colorToString(Color c)
 {
     switch (c)
     {
-        case Color::Yellow: return "Yellow";
-        case Color::Green: return "Green";
-        case Color::Blue: return "Blue";
-        case Color::Purple: return "Purple";
+    case Color::Yellow: return "Yellow";
+    case Color::Green: return "Green";
+    case Color::Blue: return "Blue";
+    case Color::Purple: return "Purple";
     }
     return "?";
 }
@@ -119,8 +99,8 @@ bool backtrack(int pos)
             // Check left neighbor
             if (col > 0)
             {
-                Edge leftNeighborRightEdge = placed[row][col - 1].getEdge(Tile::EdgeDirection::Right); // Neighbor's right
-                Edge myLeft = tiles[i].getEdge(Tile::EdgeDirection::Left);
+                Edge leftNeighborRightEdge = placed[row][col - 1].edges[static_cast<const int>(Tile::EdgeDirection::Right)]; // Neighbor's right
+                Edge myLeft = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Left)];
                 if (!matchEdges(leftNeighborRightEdge, myLeft))
                 {
                     ok = false;
@@ -129,8 +109,8 @@ bool backtrack(int pos)
             // Check top neighbor
             if (row > 0)
             {
-                Edge topNeighborBottomEdge = placed[row - 1][col].getEdge(Tile::EdgeDirection::Bottom); // Neighbor's bottom
-                Edge myTop = tiles[i].getEdge(Tile::EdgeDirection::Top);
+                Edge topNeighborBottomEdge = placed[row - 1][col].edges[static_cast<const int>(Tile::EdgeDirection::Bottom)]; // Neighbor's bottom
+                Edge myTop = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Top)];
                 if (!matchEdges(topNeighborBottomEdge, myTop))
                 {
                     ok = false;
@@ -160,7 +140,6 @@ int main()
     auto start_time = std::chrono::high_resolution_clock::now();
     bool result = backtrack(0);
     auto end_time = std::chrono::high_resolution_clock::now();
-
     if (result)
     {
         std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
@@ -173,7 +152,7 @@ int main()
                 for (int edge = 0; edge < tile.NoOfEdges; ++edge)
                 {
                     std::cout << colorToString(tile.edges[edge].color) << "/" << partToString(tile.edges[edge].part);
-                    if (edge < tile.NoOfEdges-1) // Don't set comma after last edge
+                    if (edge < tile.NoOfEdges - 1) // Don't set comma after last edge
                     {
                         std::cout << ", ";
                     }

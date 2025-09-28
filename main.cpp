@@ -159,8 +159,9 @@ inline bool backtrack(int pos)
 int main()
 {
     auto start_time = std::chrono::high_resolution_clock::now();
-
-    if (backtrack(0))
+    bool result = backtrack(0);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    if (result)
     {
         std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
         for (int row = 0; row < N; ++row)
@@ -187,8 +188,8 @@ int main()
         std::cout << "No solution found with the given tiles.\n";
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds\n";
+
+    std::cout << "Elapsed time for algorithm: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds\n";
 
     return 0;
 }

@@ -13,18 +13,27 @@ struct Edge
 
 struct Tile
 {
-    static const int NoOfEdges = 4;
+    enum class EdgeDirection
+    {
+        Top = 0,
+        Right = 1,
+        Bottom = 2,
+        Left = 3,
+        Max = 4 // Number of edge directions
+    };
+
+    static const int NoOfEdges = static_cast<const int>(EdgeDirection::Max);
 
     int id;
-    Edge edges[NoOfEdges]; // 0=top,1=right,2=bottom,3=left
+    Edge edges[NoOfEdges];
 
     void rotate90cw()
     {
-        Edge tmp = edges[3];
-        edges[3] = edges[2];
-        edges[2] = edges[1];
-        edges[1] = edges[0];
-        edges[0] = tmp;
+        Edge tmp = edges[static_cast<const int>(EdgeDirection::Left)];
+        edges[static_cast<const int>(EdgeDirection::Left)] = edges[static_cast<const int>(EdgeDirection::Bottom)];
+        edges[static_cast<const int>(EdgeDirection::Bottom)] = edges[static_cast<const int>(EdgeDirection::Right)];
+        edges[static_cast<const int>(EdgeDirection::Right)] = edges[static_cast<const int>(EdgeDirection::Top)];
+        edges[static_cast<const int>(EdgeDirection::Top)] = tmp;
     }
 };
 
@@ -71,7 +80,11 @@ std::string partToString(Part p)
 
 bool backtrack(int pos)
 {
-    if (pos == NumberOfTiles) return true;
+    if (pos == NumberOfTiles)
+    {
+        return true;
+    }
+
     int row = pos / N;
     int col = pos % N;
 
@@ -86,8 +99,8 @@ bool backtrack(int pos)
             // Check left neighbor
             if (col > 0)
             {
-                Edge leftNeighborRightEdge = placed[row][col - 1].edges[1]; // Neighbor's right
-                Edge myLeft = tiles[i].edges[3];
+                Edge leftNeighborRightEdge = placed[row][col - 1].edges[static_cast<const int>(Tile::EdgeDirection::Right)]; // Neighbor's right
+                Edge myLeft = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Left)];
                 if (!matchEdges(leftNeighborRightEdge, myLeft))
                 {
                     ok = false;
@@ -96,8 +109,8 @@ bool backtrack(int pos)
             // Check top neighbor
             if (row > 0)
             {
-                Edge topNeighborBottomEdge = placed[row - 1][col].edges[2]; // Neighbor's bottom
-                Edge myTop = tiles[i].edges[0];
+                Edge topNeighborBottomEdge = placed[row - 1][col].edges[static_cast<const int>(Tile::EdgeDirection::Bottom)]; // Neighbor's bottom
+                Edge myTop = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Top)];
                 if (!matchEdges(topNeighborBottomEdge, myTop))
                 {
                     ok = false;
@@ -128,7 +141,7 @@ int main()
 
     if (backtrack(0))
     {
-        std::cout << "Løsning fundet (hver brik: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
+        std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
         for (int row = 0; row < N; ++row)
         {
             for (int col = 0; col < N; ++col)
@@ -138,7 +151,7 @@ int main()
                 for (int edge = 0; edge < tile.NoOfEdges; ++edge)
                 {
                     std::cout << colorToString(tile.edges[edge].color) << "/" << partToString(tile.edges[edge].part);
-                    if (edge < tile.NoOfEdges-1) // Don't set comma for last edge
+                    if (edge < tile.NoOfEdges-1) // Don't set comma after last edge
                     {
                         std::cout << ", ";
                     }
@@ -150,7 +163,7 @@ int main()
     }
     else
     {
-        std::cout << "Ingen løsning fundet med de angivne brikker.\n";
+        std::cout << "No solution found with the given tiles.\n";
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

@@ -10,6 +10,16 @@ struct Edge
 {
     Color color;
     Part part;
+
+    bool operator== (const Edge& other) const noexcept
+    {
+        return (this->color == other.color && this->part == other.part);
+    }
+
+    bool operator!=(const Edge& other) const noexcept
+    {
+        return !(*this == other);
+    }
 };
 
 struct Tile
@@ -36,6 +46,29 @@ struct Tile
         edges[static_cast<const int>(EdgeDirection::Right)] = edges[static_cast<const int>(EdgeDirection::Top)];
         edges[static_cast<const int>(EdgeDirection::Top)] = tmp;
     }
+
+    //Compare with other tile and do rotations during compare
+    bool similarTile(const Tile& other)
+    {
+        // Do rotate of other's edge to test all possible rotations
+        for (int rotateOtherEdge = 0; rotateOtherEdge < NoOfEdges; rotateOtherEdge++)
+        {
+            bool match = true;
+            for (int edge = 0; edge < NoOfEdges; ++edge)
+            {
+                if (this->edges[edge] != other.edges[(edge + rotateOtherEdge) % NoOfEdges])
+                {
+                    match = false;
+                    break; // Break edge for-loop
+                }                    
+            }
+            if (match == true)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 static const int N = 3;
@@ -56,7 +89,6 @@ Tile tiles[NumberOfTiles] =
 bool used[NumberOfTiles] = { false };
 
 using TileGrid = Tile[N][N];
-//using TileGrid = std::array<std::array<Tile, N>, N>; // Use std::array to be able to emplace_back in vector
 TileGrid placed;
 
 bool matchEdges(const Edge& a, const Edge& b)
@@ -103,7 +135,7 @@ struct TileGridStruct // To be used in vector (since vector cannot handle 2 dime
     }
 };
 std::vector<TileGridStruct> solutions;
-
+uint64_t numberOfTestedCombinations = 0;
 bool backtrack(int pos)
 {
     if (pos == NumberOfTiles)
@@ -146,6 +178,8 @@ bool backtrack(int pos)
                 }
             }
 
+            ++numberOfTestedCombinations;
+            
             if (ok)
             {
                 placed[row][col] = tiles[i]; // Copy current rotated orientation
@@ -272,6 +306,51 @@ void PrintAsciiTiles(const TileGrid& tiles)
     }
 }
 
+void PrintDuplicates()
+{
+    bool used[NumberOfTiles] = { false };
+    std::vector<std::vector<const Tile*>> duplicatesCollection;
+
+    // Find all duplicates and put them in duplicatesCollection
+    for (int i = 0; i < NumberOfTiles - 1; ++i) // -1 since we need at least one more to compare with
+    {
+        std::vector<const Tile*> duplicates{ &tiles[i] }; //Prepare 
+        for (int other = i + 1; other < NumberOfTiles; ++other)
+        {
+            if (used[other] == false && tiles[i].similarTile(tiles[other]) == true)
+            {
+                duplicates.emplace_back(&tiles[other]);
+                used[other] = true;
+            }
+        }
+        if (duplicates.size() > 1)
+        {
+            duplicatesCollection.emplace_back(std::move(duplicates));
+        }
+    }
+    
+    if (duplicatesCollection.size() == 0)
+    {
+        std::cout << "No duplicates of tiles found\n";
+    }
+    else
+    {
+        // Print all duplicates
+        std::cout << "Duplicates of tiles found:\n";
+        for (const auto& dc : duplicatesCollection)
+        {
+            std::cout << "  Similiar tiles (id): ";
+            bool firstId = true;
+            for (const auto& d : dc)
+            {
+                std::cout << (firstId == true ? "" : ",") << d->id;
+                firstId = false;
+            }
+            std::cout << std::endl;
+        }
+    }
+}
+
 int main()
 {
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -292,7 +371,11 @@ int main()
         std::cout << "No solution found with the given tiles.\n";
     }
 
+    std::cout << "Number of tested combinations: " << numberOfTestedCombinations << std::endl;
     std::cout << "Elapsed time for algorithm: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds\n";
+
+    std::cout << std::endl;
+    PrintDuplicates();
 
     return 0;
 }

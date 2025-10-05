@@ -1,9 +1,10 @@
 #include <string>
 #include <iostream>
 #include <chrono>
+#include <vector>
 
 enum class Color { Yellow, Green, Blue, Purple };
-enum class Part { Top, Bottom }; // Top = overkrop, Bottom = underkrop
+enum class Part { Top, Bottom }; // Top = head, Bottom = legs
 
 struct Edge
 {
@@ -53,7 +54,10 @@ Tile tiles[NumberOfTiles] =
 };
 
 bool used[NumberOfTiles] = { false };
-Tile placed[N][N];
+
+using TileGrid = Tile[N][N];
+//using TileGrid = std::array<std::array<Tile, N>, N>; // Use std::array to be able to emplace_back in vector
+TileGrid placed;
 
 bool matchEdges(const Edge& a, const Edge& b)
 {
@@ -78,11 +82,36 @@ std::string partToString(Part p)
     return (p == Part::Top) ? "Top" : "Bottom";
 }
 
+struct TileGridStruct // To be used in vector (since vector cannot handle 2 dimensional arrays as element)
+{
+    TileGrid placed;
+
+    TileGridStruct(const TileGrid& copyFrom)
+    {
+        copyFromTileGrid(copyFrom);
+    }
+
+    void copyFromTileGrid(const TileGrid& copyFrom)
+    {
+        for (int r = 0; r < N; ++r)
+        {
+            for (int c = 0; c < N; ++c)
+            {
+                placed[r][c] = copyFrom[r][c];
+            }
+        }
+    }
+};
+std::vector<TileGridStruct> solutions;
+
 bool backtrack(int pos)
 {
     if (pos == NumberOfTiles)
-    {
-        return true;
+    {       
+        //Add solution to vector
+        solutions.emplace_back(placed);
+        //return true; // If only one solution is needed
+        return false; //To proceed finding the next solution
     }
 
     int row = pos / N;
@@ -135,7 +164,7 @@ bool backtrack(int pos)
     return false;
 }
 
-void PrintDescriptionOfTiles(const Tile (&tiles)[N][N])
+void PrintDescriptionOfTiles(const TileGrid& tiles)
 {
     std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
     for (int row = 0; row < N; ++row)
@@ -162,10 +191,10 @@ std::string colorCode(Color c)
 {
     switch (c)
     {
-        case Color::Yellow: return "\033[33m";
-        case Color::Green:  return "\033[32m";
-        case Color::Blue:   return "\033[34m";
-        case Color::Purple: return "\033[35m";
+    case Color::Yellow: return "\033[33m";
+    case Color::Green:  return "\033[32m";
+    case Color::Blue:   return "\033[34m";
+    case Color::Purple: return "\033[35m";
     }
     return "\033[0m";
 }
@@ -175,7 +204,7 @@ std::string resetColor()
     return "\033[0m";
 }
 
-void PrintAsciiTiles(const Tile (&tiles)[N][N])
+void PrintAsciiTiles(const TileGrid& tiles)
 {
     for (int row = 0; row < N; ++row)
     {
@@ -236,12 +265,17 @@ void PrintAsciiTiles(const Tile (&tiles)[N][N])
 int main()
 {
     auto start_time = std::chrono::high_resolution_clock::now();
-    bool result = backtrack(0);
+    backtrack(0);
     auto end_time = std::chrono::high_resolution_clock::now();
-    if (result)
+    
+    if (solutions.size() > 0)
     {
-        PrintDescriptionOfTiles(placed);
-        PrintAsciiTiles(placed);
+        for (const auto& e : solutions)
+        {
+            PrintDescriptionOfTiles(e.placed);
+            PrintAsciiTiles(e.placed);
+        }
+        std::cout << "Number of solutions: " << solutions.size() << std::endl;
     }
     else
     {

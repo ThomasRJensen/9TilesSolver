@@ -191,10 +191,20 @@ std::string colorCode(Color c)
 {
     switch (c)
     {
-    case Color::Yellow: return "\033[33m";
-    case Color::Green:  return "\033[32m";
-    case Color::Blue:   return "\033[34m";
-    case Color::Purple: return "\033[35m";
+        //case Color::Yellow: return "\033[33m"; // Yellow text
+        //case Color::Green:  return "\033[32m"; // Green text
+        //case Color::Blue:   return "\033[34m"; // Blue text
+        //case Color::Purple: return "\033[35m"; // Purple text
+
+        //case Color::Yellow: return "\033[43m"; // Yellow background
+        //case Color::Green:  return "\033[42m"; // Green background
+        //case Color::Blue:   return "\033[44m"; // Blue background
+        //case Color::Purple: return "\033[45m"; // Purple background
+
+        case Color::Yellow: return "\033[30;43m"; // Black text, yellow background
+        case Color::Green:  return "\033[30;42m"; // Black text, green background
+        case Color::Blue:   return "\033[37;44m"; // White text, blue background
+        case Color::Purple: return "\033[37;45m"; // White text, purple background
     }
     return "\033[0m";
 }

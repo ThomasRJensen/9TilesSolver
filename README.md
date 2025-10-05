@@ -15,6 +15,6 @@ g++ -std=c++17 main.cpp -O2 -o tile_solver
 ```
 
 ## Output (only last part of output with 2 of the 16 solutions - since I found no quick way to screen capture the full output):
-<img width="585" height="832" alt="image" src="https://github.com/user-attachments/assets/73f5946d-69cb-4244-a285-08203b9ad55e" />
+<img width="589" height="830" alt="image" src="https://github.com/user-attachments/assets/a3b82b5c-49a9-4fef-b44b-f1bb7838bdd8" />
 
 

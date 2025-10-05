@@ -15,5 +15,6 @@ g++ -std=c++17 main.cpp -O2 -o tile_solver
 ```
 
 ## Output:
-<img width="582" height="464" alt="image" src="https://github.com/user-attachments/assets/e8f7e0e7-9a19-4293-9f32-a0f9f0643510" />
+<img width="585" height="832" alt="image" src="https://github.com/user-attachments/assets/73f5946d-69cb-4244-a285-08203b9ad55e" />
+
 

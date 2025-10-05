@@ -135,6 +135,104 @@ bool backtrack(int pos)
     return false;
 }
 
+void PrintDescriptionOfTiles(const Tile (&tiles)[N][N])
+{
+    std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
+    for (int row = 0; row < N; ++row)
+    {
+        for (int col = 0; col < N; ++col)
+        {
+            const Tile& tile = tiles[row][col];
+            std::cout << "Pos(" << row << "," << col << "): id=" << tile.id << " [ ";
+            for (int edge = 0; edge < tile.NoOfEdges; ++edge)
+            {
+                std::cout << colorToString(tile.edges[edge].color) << "/" << partToString(tile.edges[edge].part);
+                if (edge < tile.NoOfEdges - 1) // Don't set comma after last edge
+                {
+                    std::cout << ", ";
+                }
+            }
+            std::cout << " ]\n";
+        }
+        std::cout << "\n";
+    }
+}
+
+std::string colorCode(Color c)
+{
+    switch (c)
+    {
+        case Color::Yellow: return "\033[33m";
+        case Color::Green:  return "\033[32m";
+        case Color::Blue:   return "\033[34m";
+        case Color::Purple: return "\033[35m";
+    }
+    return "\033[0m";
+}
+
+std::string resetColor()
+{
+    return "\033[0m";
+}
+
+void PrintAsciiTiles(const Tile (&tiles)[N][N])
+{
+    for (int row = 0; row < N; ++row)
+    {
+        // Each tile is 5 lines tall
+        for (int sub = 0; sub < 5; ++sub)
+        {
+            for (int col = 0; col < N; ++col)
+            {
+                const Tile& t = tiles[row][col];
+
+                // Find edges
+                const Edge& topEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Top)];
+                const Edge& rightEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Right)];
+                const Edge& bottomEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Bottom)];
+                const Edge& leftEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Left)];
+
+                // Determine symbols
+                char topSym = (topEdge.part == Part::Top) ? 'O' : '|';
+                char rightSym = (rightEdge.part == Part::Bottom) ? '-' : 'O';
+                char bottomSym = (bottomEdge.part == Part::Bottom) ? '|' : 'O';
+                char leftSym = (leftEdge.part == Part::Bottom) ? '-' : 'O';
+
+                // Colors
+                std::string topColor = colorCode(topEdge.color);
+                std::string rightColor = colorCode(rightEdge.color);
+                std::string bottomColor = colorCode(bottomEdge.color);
+                std::string leftColor = colorCode(leftEdge.color);
+                std::string reset = resetColor();
+
+                // Draw sub-line of this tile (7 chars wide)
+                if (sub == 0) // Top line of tile (Index 0 of 0-4)
+                {
+                    std::cout << "+--" << topColor << topSym << reset << "--+";
+                }
+                else if (sub == 2) // Middle line of tile with symbol (Index 2 of 0-4)
+                {
+                    std::cout << leftColor << leftSym << reset
+                        << "     "
+                        << rightColor << rightSym << reset;
+                }
+                else if (sub == 4) // Bottom line of tile (Index 4 of 0-4)
+                {
+                    std::cout << "+--" << bottomColor << bottomSym << reset << "--+";
+                }
+                else // The lines that does not include symbols
+                {
+                    std::cout << "|     |";
+                }
+
+                std::cout << "  "; // Spacing between tiles
+            }
+            std::cout << "\n";
+        }
+        std::cout << "\n"; // Spacing between tile rows
+    }
+}
+
 int main()
 {
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -142,25 +240,8 @@ int main()
     auto end_time = std::chrono::high_resolution_clock::now();
     if (result)
     {
-        std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
-        for (int row = 0; row < N; ++row)
-        {
-            for (int col = 0; col < N; ++col)
-            {
-                Tile& tile = placed[row][col];
-                std::cout << "Pos(" << row << "," << col << "): id=" << tile.id << " [ ";
-                for (int edge = 0; edge < tile.NoOfEdges; ++edge)
-                {
-                    std::cout << colorToString(tile.edges[edge].color) << "/" << partToString(tile.edges[edge].part);
-                    if (edge < tile.NoOfEdges - 1) // Don't set comma after last edge
-                    {
-                        std::cout << ", ";
-                    }
-                }
-                std::cout << " ]\n";
-            }
-            std::cout << "\n";
-        }
+        PrintDescriptionOfTiles(placed);
+        PrintAsciiTiles(placed);
     }
     else
     {

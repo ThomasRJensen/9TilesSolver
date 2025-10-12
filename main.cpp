@@ -3,11 +3,11 @@
 #include <chrono>
 #include <vector>
 
-enum class Color { Yellow, Green, Blue, Purple };
-enum class Part { Top, Bottom }; // Top = head, Bottom = legs
-
 struct Edge
 {
+    enum class Color { Yellow, Green, Blue, Purple };
+    enum class Part { Top, Bottom }; // Top = head, Bottom = legs
+
     Color color;
     Part part;
 
@@ -20,7 +20,30 @@ struct Edge
     {
         return !(*this == other);
     }
-};
+
+    std::string colorToString() const noexcept
+    {
+        switch (color)
+        {
+        case Color::Yellow: return "Yellow";
+        case Color::Green: return "Green";
+        case Color::Blue: return "Blue";
+        case Color::Purple: return "Purple";
+        }
+        return "?";
+    }
+
+    std::string partToString() const noexcept
+    {
+        return (part == Part::Top) ? "Top" : "Bottom";
+    }
+
+    bool matchEdges(const Edge& other) const noexcept
+    {
+        // Match: same color, opposite part (Top vs Bottom)
+        return (color == other.color) && (part != other.part);
+    }
+}; // struct Edge
 
 struct Tile
 {
@@ -38,7 +61,7 @@ struct Tile
     int id;
     Edge edges[NoOfEdges];
 
-    void rotate90cw()
+    void rotate90cw() noexcept
     {
         Edge tmp = edges[static_cast<const int>(EdgeDirection::Left)];
         edges[static_cast<const int>(EdgeDirection::Left)] = edges[static_cast<const int>(EdgeDirection::Bottom)];
@@ -79,67 +102,29 @@ struct Tile
         }
         return false;
     }
-};
+}; // struct Tile
 
 static const int N = 3;
 static const int NumberOfTiles = N * N; // Tiles 3x3
-Tile tiles[NumberOfTiles] =
-{
-    {0, {{Color::Purple, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Yellow, Part::Top}, {Color::Green, Part::Bottom}}}, // Tile 0 (0,0 on picture)
-    {1, {{Color::Purple, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Yellow, Part::Top}, {Color::Blue, Part::Bottom}}}, // Tile 1 (1,0 on picture)
-    {2, {{Color::Purple, Part::Bottom}, {Color::Green, Part::Top}, {Color::Yellow, Part::Top}, {Color::Blue, Part::Bottom}}}, // Tile 2 (2,0 on picture)
-    {3, {{Color::Yellow, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Green, Part::Top}, {Color::Purple, Part::Bottom}}}, // Tile 3 (0,1 on picture)
-    {4, {{Color::Yellow, Part::Bottom}, {Color::Green, Part::Top}, {Color::Purple, Part::Top}, {Color::Blue, Part::Bottom}}}, // Tile 4 (1,1 on picture)
-    {5, {{Color::Yellow, Part::Bottom}, {Color::Green, Part::Top}, {Color::Purple, Part::Top}, {Color::Green, Part::Bottom}}}, // Tile 5 (2,1 on picture)
-    {6, {{Color::Green, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Purple, Part::Top}, {Color::Yellow, Part::Bottom}}}, // Tile 6 (0,2 on picture)
-    {7, {{Color::Purple, Part::Bottom}, {Color::Green, Part::Top}, {Color::Blue, Part::Top}, {Color::Yellow, Part::Bottom}}}, // Tile 7 (1,2 on picture)
-    {8, {{Color::Purple, Part::Bottom}, {Color::Blue, Part::Top}, {Color::Yellow, Part::Top}, {Color::Green, Part::Bottom}}} // Tile 8 (2,2 on picture)
-};
-
-bool used[NumberOfTiles] = { false };
-
 using TileGrid = Tile[N][N];
-TileGrid placed;
 
-bool matchEdges(const Edge& a, const Edge& b)
-{
-    // Match: same color, opposite part (Top vs Bottom)
-    return (a.color == b.color) && (a.part != b.part);
-}
-
-std::string colorToString(Color c)
-{
-    switch (c)
-    {
-    case Color::Yellow: return "Yellow";
-    case Color::Green: return "Green";
-    case Color::Blue: return "Blue";
-    case Color::Purple: return "Purple";
-    }
-    return "?";
-}
-
-std::string partToString(Part p)
-{
-    return (p == Part::Top) ? "Top" : "Bottom";
-}
 
 struct TileGridStruct // To be used in vector (since vector cannot handle 2 dimensional arrays as element)
 {
-    TileGrid placed;
+    TileGrid tiles;
 
-    TileGridStruct(const TileGrid& copyFrom)
+    TileGridStruct(const TileGrid& copyFrom) noexcept
     {
         copyFromTileGrid(copyFrom);
     }
 
-    void copyFromTileGrid(const TileGrid& copyFrom)
+    void copyFromTileGrid(const TileGrid& copyFrom) noexcept
     {
         for (int r = 0; r < N; ++r)
         {
             for (int c = 0; c < N; ++c)
             {
-                placed[r][c] = copyFrom[r][c];
+                tiles[r][c] = copyFrom[r][c];
             }
         }
     }
@@ -150,7 +135,7 @@ struct TileGridStruct // To be used in vector (since vector cannot handle 2 dime
         {
             for (int c = 0; c < N; ++c)
             {
-                if (placed[r][c].similarTile(other.placed[r][c], false) == false)
+                if (tiles[r][c].similarTile(other.tiles[r][c], false) == false)
                 {
                     return false;
                 }
@@ -158,28 +143,163 @@ struct TileGridStruct // To be used in vector (since vector cannot handle 2 dime
         }
         return true;
     }
-};
-std::vector<TileGridStruct> solutions;
-void removeDuplicatesInSolutions(std::vector<TileGridStruct>& solutions)
-{
-    for (int i = 0; i < solutions.size() - 1; ++i) // -1 to always have one to compare with
+
+private:
+    std::string colorCode(Edge::Color c) const noexcept
     {
-        for (int u = i + 1; u < solutions.size();) // Loop the ones to compare with
+        switch (c)
         {
-            if (solutions[i] == solutions[u])
+            //case Color::Yellow: return "\033[33m"; // Yellow text
+            //case Color::Green:  return "\033[32m"; // Green text
+            //case Color::Blue:   return "\033[34m"; // Blue text
+            //case Color::Purple: return "\033[35m"; // Purple text
+
+            //case Color::Yellow: return "\033[43m"; // Yellow background
+            //case Color::Green:  return "\033[42m"; // Green background
+            //case Color::Blue:   return "\033[44m"; // Blue background
+            //case Color::Purple: return "\033[45m"; // Purple background
+
+        case Edge::Color::Yellow: return "\033[30;43m"; // Black text, yellow background
+        case Edge::Color::Green:  return "\033[30;42m"; // Black text, green background
+        case Edge::Color::Blue:   return "\033[37;44m"; // White text, blue background
+        case Edge::Color::Purple: return "\033[37;45m"; // White text, purple background
+        }
+        return "\033[0m";
+    }
+
+    std::string resetColor() const noexcept
+    {
+        return "\033[0m";
+    }
+
+public:
+    void printAsciiTiles() const noexcept
+    {
+        for (int row = 0; row < N; ++row)
+        {
+            // Each tile is 5 lines tall
+            for (int sub = 0; sub < 5; ++sub)
             {
-                solutions.erase(solutions.begin() + u); // Don't increment u if we erase an element
+                for (int col = 0; col < N; ++col)
+                {
+                    const Tile& t = tiles[row][col];
+
+                    // Find edges
+                    const Edge& topEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Top)];
+                    const Edge& rightEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Right)];
+                    const Edge& bottomEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Bottom)];
+                    const Edge& leftEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Left)];
+
+                    // Determine symbols
+                    char topSym = (topEdge.part == Edge::Part::Top) ? 'O' : '|';
+                    char rightSym = (rightEdge.part == Edge::Part::Bottom) ? '-' : 'O';
+                    char bottomSym = (bottomEdge.part == Edge::Part::Bottom) ? '|' : 'O';
+                    char leftSym = (leftEdge.part == Edge::Part::Bottom) ? '-' : 'O';
+
+                    // Colors
+                    std::string topColor = colorCode(topEdge.color);
+                    std::string rightColor = colorCode(rightEdge.color);
+                    std::string bottomColor = colorCode(bottomEdge.color);
+                    std::string leftColor = colorCode(leftEdge.color);
+                    std::string reset = resetColor();
+
+                    // Draw sub-line of this tile (7 chars wide)
+                    if (sub == 0) // Top line of tile (Index 0 of 0-4)
+                    {
+                        std::cout << " +--" << topColor << topSym << reset << "--+";
+                    }
+                    else if (sub == 2) // Middle line of tile with symbol (Index 2 of 0-4)
+                    {
+                        std::cout << " " << leftColor << leftSym << reset
+                            //<< "     "
+                            << "  " << t.id << "  " // Print tile id in middle
+                            << rightColor << rightSym << reset;
+                    }
+                    else if (sub == 4) // Bottom line of tile (Index 4 of 0-4)
+                    {
+                        std::cout << " +--" << bottomColor << bottomSym << reset << "--+";
+                    }
+                    else // The lines that does not include symbols
+                    {
+                        std::cout << " |     |";
+                    }
+
+                    std::cout << "  "; // Spacing between tiles
+                }
+                std::cout << "\n";
             }
-            else
+            std::cout << "\n"; // Spacing between tile rows
+        }
+    }
+
+    void printDescriptionOfTiles() const noexcept
+    {
+        std::cout << "Each tile: Pos(row,col): id [top,right,bottom,left] : color/part:\n\n";
+        for (int row = 0; row < N; ++row)
+        {
+            for (int col = 0; col < N; ++col)
             {
-                ++u;
+                const Tile& tile = tiles[row][col];
+                std::cout << "Pos(" << row << "," << col << "): id=" << tile.id << " [ ";
+                for (int edge = 0; edge < tile.NoOfEdges; ++edge)
+                {
+                    std::cout << tile.edges[edge].colorToString() << "/" << tile.edges[edge].partToString();
+                    if (edge < tile.NoOfEdges - 1) // Don't set comma after last edge
+                    {
+                        std::cout << ", ";
+                    }
+                }
+                std::cout << " ]\n";
+            }
+            std::cout << "\n";
+        }
+    }
+}; // struct TileGridStruct
+
+
+class Solutions : public std::vector<TileGridStruct>
+{
+public:
+    void removeDuplicatesInSolutions() noexcept
+    {
+        for (int i = 0; i < this->size() - 1; ++i) // -1 to always have one to compare with
+        {
+            for (int u = i + 1; u < this->size();) // Loop the ones to compare with
+            {
+                if ((*this)[i] == (*this)[u])
+                {
+                    this->erase(this->begin() + u); // Don't increment u if we erase an element
+                }
+                else
+                {
+                    ++u;
+                }
             }
         }
     }
-}
+}; // class Solutions
+
+Solutions solutions;
+
+
+Tile tiles[NumberOfTiles] =
+{
+    {0, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Top}, {Edge::Color::Green, Edge::Part::Bottom}}}, // Tile 0 (0,0 on picture)
+    {1, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Top}, {Edge::Color::Blue, Edge::Part::Bottom}}}, // Tile 1 (1,0 on picture)
+    {2, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Green, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Top}, {Edge::Color::Blue, Edge::Part::Bottom}}}, // Tile 2 (2,0 on picture)
+    {3, {{Edge::Color::Yellow, Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Green, Edge::Part::Top}, {Edge::Color::Purple, Edge::Part::Bottom}}}, // Tile 3 (0,1 on picture)
+    {4, {{Edge::Color::Yellow, Edge::Part::Bottom}, {Edge::Color::Green, Edge::Part::Top}, {Edge::Color::Purple, Edge::Part::Top}, {Edge::Color::Blue, Edge::Part::Bottom}}}, // Tile 4 (1,1 on picture)
+    {5, {{Edge::Color::Yellow, Edge::Part::Bottom}, {Edge::Color::Green, Edge::Part::Top}, {Edge::Color::Purple, Edge::Part::Top}, {Edge::Color::Green, Edge::Part::Bottom}}}, // Tile 5 (2,1 on picture)
+    {6, {{Edge::Color::Green,  Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Purple, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Bottom}}}, // Tile 6 (0,2 on picture)
+    {7, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Green, Edge::Part::Top}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Bottom}}}, // Tile 7 (1,2 on picture)
+    {8, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Top}, {Edge::Color::Green, Edge::Part::Bottom}}} // Tile 8 (2,2 on picture)
+};
+
+bool used[NumberOfTiles] = { false };
+TileGrid placed;
 
 uint64_t numberOfTestedCombinations = 0;
-bool backtrack(int pos)
+bool backtrack(int pos) noexcept
 {
     if (pos == NumberOfTiles)
     {       
@@ -205,7 +325,7 @@ bool backtrack(int pos)
             {
                 Edge leftNeighborRightEdge = placed[row][col - 1].edges[static_cast<const int>(Tile::EdgeDirection::Right)]; // Neighbor's right
                 Edge myLeft = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Left)];
-                if (!matchEdges(leftNeighborRightEdge, myLeft))
+                if (leftNeighborRightEdge.matchEdges(myLeft) == false)
                 {
                     ok = false;
                 }
@@ -215,7 +335,7 @@ bool backtrack(int pos)
             {
                 Edge topNeighborBottomEdge = placed[row - 1][col].edges[static_cast<const int>(Tile::EdgeDirection::Bottom)]; // Neighbor's bottom
                 Edge myTop = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Top)];
-                if (!matchEdges(topNeighborBottomEdge, myTop))
+                if (topNeighborBottomEdge.matchEdges(myTop) == false)
                 {
                     ok = false;
                 }
@@ -241,116 +361,7 @@ bool backtrack(int pos)
     return false;
 }
 
-void printDescriptionOfTiles(const TileGrid& tiles)
-{
-    std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
-    for (int row = 0; row < N; ++row)
-    {
-        for (int col = 0; col < N; ++col)
-        {
-            const Tile& tile = tiles[row][col];
-            std::cout << "Pos(" << row << "," << col << "): id=" << tile.id << " [ ";
-            for (int edge = 0; edge < tile.NoOfEdges; ++edge)
-            {
-                std::cout << colorToString(tile.edges[edge].color) << "/" << partToString(tile.edges[edge].part);
-                if (edge < tile.NoOfEdges - 1) // Don't set comma after last edge
-                {
-                    std::cout << ", ";
-                }
-            }
-            std::cout << " ]\n";
-        }
-        std::cout << "\n";
-    }
-}
-
-std::string colorCode(Color c)
-{
-    switch (c)
-    {
-        //case Color::Yellow: return "\033[33m"; // Yellow text
-        //case Color::Green:  return "\033[32m"; // Green text
-        //case Color::Blue:   return "\033[34m"; // Blue text
-        //case Color::Purple: return "\033[35m"; // Purple text
-
-        //case Color::Yellow: return "\033[43m"; // Yellow background
-        //case Color::Green:  return "\033[42m"; // Green background
-        //case Color::Blue:   return "\033[44m"; // Blue background
-        //case Color::Purple: return "\033[45m"; // Purple background
-
-        case Color::Yellow: return "\033[30;43m"; // Black text, yellow background
-        case Color::Green:  return "\033[30;42m"; // Black text, green background
-        case Color::Blue:   return "\033[37;44m"; // White text, blue background
-        case Color::Purple: return "\033[37;45m"; // White text, purple background
-    }
-    return "\033[0m";
-}
-
-std::string resetColor()
-{
-    return "\033[0m";
-}
-
-void printAsciiTiles(const TileGrid& tiles)
-{
-    for (int row = 0; row < N; ++row)
-    {
-        // Each tile is 5 lines tall
-        for (int sub = 0; sub < 5; ++sub)
-        {
-            for (int col = 0; col < N; ++col)
-            {
-                const Tile& t = tiles[row][col];
-
-                // Find edges
-                const Edge& topEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Top)];
-                const Edge& rightEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Right)];
-                const Edge& bottomEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Bottom)];
-                const Edge& leftEdge = t.edges[static_cast<int>(Tile::EdgeDirection::Left)];
-
-                // Determine symbols
-                char topSym = (topEdge.part == Part::Top) ? 'O' : '|';
-                char rightSym = (rightEdge.part == Part::Bottom) ? '-' : 'O';
-                char bottomSym = (bottomEdge.part == Part::Bottom) ? '|' : 'O';
-                char leftSym = (leftEdge.part == Part::Bottom) ? '-' : 'O';
-
-                // Colors
-                std::string topColor = colorCode(topEdge.color);
-                std::string rightColor = colorCode(rightEdge.color);
-                std::string bottomColor = colorCode(bottomEdge.color);
-                std::string leftColor = colorCode(leftEdge.color);
-                std::string reset = resetColor();
-
-                // Draw sub-line of this tile (7 chars wide)
-                if (sub == 0) // Top line of tile (Index 0 of 0-4)
-                {
-                    std::cout << " +--" << topColor << topSym << reset << "--+";
-                }
-                else if (sub == 2) // Middle line of tile with symbol (Index 2 of 0-4)
-                {
-                    std::cout << " " << leftColor << leftSym << reset
-                        //<< "     "
-                        << "  " << t.id << "  " // Print tile id in middle
-                        << rightColor << rightSym << reset;
-                }
-                else if (sub == 4) // Bottom line of tile (Index 4 of 0-4)
-                {
-                    std::cout << " +--" << bottomColor << bottomSym << reset << "--+";
-                }
-                else // The lines that does not include symbols
-                {
-                    std::cout << " |     |";
-                }
-
-                std::cout << "  "; // Spacing between tiles
-            }
-            std::cout << "\n";
-        }
-        std::cout << "\n"; // Spacing between tile rows
-    }
-}
-
-void printDuplicatesOfTiles()
+void printDuplicatesOfTiles() noexcept
 {
     bool used[NumberOfTiles] = { false };
     std::vector<std::vector<const Tile*>> duplicatesCollection;
@@ -403,14 +414,14 @@ int main()
     
     std::cout << "In case there are duplicates of tiles the solution will look the same just with the 2 similar tiles swapped\n";
     std::cout << "Lets remove these duplicates\n";
-    removeDuplicatesInSolutions(solutions); // There are 2 similar tiles which then doubles the combinations. Lets remove the duplicate solutions
+    solutions.removeDuplicatesInSolutions(); // There are 2 similar tiles which then doubles the combinations. Lets remove the duplicate solutions
 
     if (solutions.size() > 0)
     {
-        for (const auto& e : solutions)
+        for (const auto& solution : solutions)
         {
-            printDescriptionOfTiles(e.placed);
-            printAsciiTiles(e.placed);
+            solution.printDescriptionOfTiles();
+            solution.printAsciiTiles();
         }
         std::cout << "Number of solutions: " << solutions.size() << std::endl;
     }

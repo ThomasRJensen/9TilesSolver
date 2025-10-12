@@ -47,11 +47,21 @@ struct Tile
         edges[static_cast<const int>(EdgeDirection::Top)] = tmp;
     }
 
-    //Compare with other tile and do rotations during compare
-    bool similarTile(const Tile& other)
+    //Compare with other tile. To do rotations during compare set rotateDuringCompare to true
+    bool similarTile(const Tile& other, bool rotateDuringCompare) const noexcept
     {
-        // Do rotate of other's edge to test all possible rotations
-        for (int rotateOtherEdge = 0; rotateOtherEdge < NoOfEdges; rotateOtherEdge++)
+        int noOfRotations = 1;
+        if (rotateDuringCompare == true)
+        {
+            noOfRotations = NoOfEdges; // Do rotate of other's edge to test all possible rotations
+        }
+        else
+        {
+            noOfRotations = 1; // Do not rotate during compare
+        }
+
+        // Rotate loop
+        for (int rotateOtherEdge = 0; rotateOtherEdge < noOfRotations; rotateOtherEdge++)
         {
             bool match = true;
             for (int edge = 0; edge < NoOfEdges; ++edge)
@@ -133,8 +143,41 @@ struct TileGridStruct // To be used in vector (since vector cannot handle 2 dime
             }
         }
     }
+
+    bool operator== (const TileGridStruct& other) const noexcept
+    {
+        for (int r = 0; r < N; ++r)
+        {
+            for (int c = 0; c < N; ++c)
+            {
+                if (placed[r][c].similarTile(other.placed[r][c], false) == false)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 };
 std::vector<TileGridStruct> solutions;
+void removeDuplicatesInSolutions(std::vector<TileGridStruct>& solutions)
+{
+    for (int i = 0; i < solutions.size() - 1; ++i) // -1 to always have one to compare with
+    {
+        for (int u = i + 1; u < solutions.size();) // Loop the ones to compare with
+        {
+            if (solutions[i] == solutions[u])
+            {
+                solutions.erase(solutions.begin() + u); // Don't increment u if we erase an element
+            }
+            else
+            {
+                ++u;
+            }
+        }
+    }
+}
+
 uint64_t numberOfTestedCombinations = 0;
 bool backtrack(int pos)
 {
@@ -198,7 +241,7 @@ bool backtrack(int pos)
     return false;
 }
 
-void PrintDescriptionOfTiles(const TileGrid& tiles)
+void printDescriptionOfTiles(const TileGrid& tiles)
 {
     std::cout << "Solution found (each tile: Pos(row,col): id [top,right,bottom,left] : color/part):\n\n";
     for (int row = 0; row < N; ++row)
@@ -248,7 +291,7 @@ std::string resetColor()
     return "\033[0m";
 }
 
-void PrintAsciiTiles(const TileGrid& tiles)
+void printAsciiTiles(const TileGrid& tiles)
 {
     for (int row = 0; row < N; ++row)
     {
@@ -281,21 +324,22 @@ void PrintAsciiTiles(const TileGrid& tiles)
                 // Draw sub-line of this tile (7 chars wide)
                 if (sub == 0) // Top line of tile (Index 0 of 0-4)
                 {
-                    std::cout << "+--" << topColor << topSym << reset << "--+";
+                    std::cout << " +--" << topColor << topSym << reset << "--+";
                 }
                 else if (sub == 2) // Middle line of tile with symbol (Index 2 of 0-4)
                 {
-                    std::cout << leftColor << leftSym << reset
-                        << "     "
+                    std::cout << " " << leftColor << leftSym << reset
+                        //<< "     "
+                        << "  " << t.id << "  " // Print tile id in middle
                         << rightColor << rightSym << reset;
                 }
                 else if (sub == 4) // Bottom line of tile (Index 4 of 0-4)
                 {
-                    std::cout << "+--" << bottomColor << bottomSym << reset << "--+";
+                    std::cout << " +--" << bottomColor << bottomSym << reset << "--+";
                 }
                 else // The lines that does not include symbols
                 {
-                    std::cout << "|     |";
+                    std::cout << " |     |";
                 }
 
                 std::cout << "  "; // Spacing between tiles
@@ -306,7 +350,7 @@ void PrintAsciiTiles(const TileGrid& tiles)
     }
 }
 
-void PrintDuplicates()
+void printDuplicatesOfTiles()
 {
     bool used[NumberOfTiles] = { false };
     std::vector<std::vector<const Tile*>> duplicatesCollection;
@@ -314,10 +358,10 @@ void PrintDuplicates()
     // Find all duplicates and put them in duplicatesCollection
     for (int i = 0; i < NumberOfTiles - 1; ++i) // -1 since we need at least one more to compare with
     {
-        std::vector<const Tile*> duplicates{ &tiles[i] }; //Prepare 
+        std::vector<const Tile*> duplicates{ &tiles[i] }; //Prepare the vector by adding current tile. This will be used in case there are duplicates
         for (int other = i + 1; other < NumberOfTiles; ++other)
         {
-            if (used[other] == false && tiles[i].similarTile(tiles[other]) == true)
+            if (used[other] == false && tiles[i].similarTile(tiles[other], true) == true)
             {
                 duplicates.emplace_back(&tiles[other]);
                 used[other] = true;
@@ -357,12 +401,16 @@ int main()
     backtrack(0);
     auto end_time = std::chrono::high_resolution_clock::now();
     
+    std::cout << "In case there are duplicates of tiles the solution will look the same just with the 2 similar tiles swapped\n";
+    std::cout << "Lets remove these duplicates\n";
+    removeDuplicatesInSolutions(solutions); // There are 2 similar tiles which then doubles the combinations. Lets remove the duplicate solutions
+
     if (solutions.size() > 0)
     {
         for (const auto& e : solutions)
         {
-            PrintDescriptionOfTiles(e.placed);
-            PrintAsciiTiles(e.placed);
+            printDescriptionOfTiles(e.placed);
+            printAsciiTiles(e.placed);
         }
         std::cout << "Number of solutions: " << solutions.size() << std::endl;
     }
@@ -375,7 +423,7 @@ int main()
     std::cout << "Elapsed time for algorithm: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds\n";
 
     std::cout << std::endl;
-    PrintDuplicates();
+    printDuplicatesOfTiles();
 
     return 0;
 }

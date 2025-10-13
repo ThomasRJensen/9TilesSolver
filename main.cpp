@@ -108,7 +108,6 @@ static const int N = 3;
 static const int NumberOfTiles = N * N; // Tiles 3x3
 using TileGrid = Tile[N][N];
 
-
 struct TileGridStruct // To be used in vector (since vector cannot handle 2 dimensional arrays as element)
 {
     TileGrid tiles;
@@ -256,7 +255,6 @@ public:
     }
 }; // struct TileGridStruct
 
-
 class Solutions : public std::vector<TileGridStruct>
 {
 public:
@@ -279,10 +277,150 @@ public:
     }
 }; // class Solutions
 
-Solutions solutions;
+class Solver
+{
+private:
+    Solutions solutions;
 
+    Tile tiles[NumberOfTiles];
+    bool used[NumberOfTiles] = { false };
+    TileGrid placed; // This could be changed to TileGridPtr and only have pointers to the tiles
 
-Tile tiles[NumberOfTiles] =
+    uint64_t numberOfTestedCombinations = 0;
+    bool backtrack(int pos) noexcept
+    {
+        if (pos == NumberOfTiles)
+        {
+            //Add solution to vector
+            solutions.emplace_back(placed);
+            //return true; // If only one solution is needed
+            return false; //To proceed finding the next solution
+        }
+
+        int row = pos / N;
+        int col = pos % N;
+
+        for (int i = 0; i < NumberOfTiles; ++i)
+        {
+            if (used[i]) continue;
+
+            // Try all 4 rotations
+            for (int rot = 0; rot < Tile::NoOfEdges; ++rot)
+            {
+                bool ok = true;
+                // Check left neighbor
+                if (col > 0)
+                {
+                    Edge leftNeighborRightEdge = placed[row][col - 1].edges[static_cast<const int>(Tile::EdgeDirection::Right)]; // Neighbor's right
+                    Edge myLeft = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Left)];
+                    if (leftNeighborRightEdge.matchEdges(myLeft) == false)
+                    {
+                        ok = false;
+                    }
+                }
+                // Check top neighbor
+                if (row > 0)
+                {
+                    Edge topNeighborBottomEdge = placed[row - 1][col].edges[static_cast<const int>(Tile::EdgeDirection::Bottom)]; // Neighbor's bottom
+                    Edge myTop = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Top)];
+                    if (topNeighborBottomEdge.matchEdges(myTop) == false)
+                    {
+                        ok = false;
+                    }
+                }
+
+                ++numberOfTestedCombinations;
+
+                if (ok)
+                {
+                    placed[row][col] = tiles[i]; // Copy current rotated orientation
+                    used[i] = true;
+                    if (backtrack(pos + 1))
+                    {
+                        return true;
+                    }
+                    used[i] = false;
+                }
+                // Rotate tile for next try
+                tiles[i].rotate90cw();
+            }
+            // After 4 rotations tile is back to original orientation
+        }
+        return false;
+    }
+
+public:
+    Solver(const Tile(&inputTiles)[NumberOfTiles])
+    {
+        for (size_t i = 0; i < NumberOfTiles; ++i)
+        {
+            tiles[i] = inputTiles[i];
+        }
+    }
+
+    void solve()
+    {
+        solutions.clear();
+        backtrack(0);
+    }
+
+    Solutions getSolutions()
+    {
+        return solutions;
+    }
+
+    uint64_t getNumberOfTestedCombinations()
+    {
+        return numberOfTestedCombinations;
+    }
+
+    void printDuplicatesOfTiles() noexcept
+    {
+        bool used[NumberOfTiles] = { false };
+        std::vector<std::vector<const Tile*>> duplicatesCollection;
+
+        // Find all duplicates and put them in duplicatesCollection
+        for (int i = 0; i < NumberOfTiles - 1; ++i) // -1 since we need at least one more to compare with
+        {
+            std::vector<const Tile*> duplicates{ &tiles[i] }; //Prepare the vector by adding current tile. This will be used in case there are duplicates
+            for (int other = i + 1; other < NumberOfTiles; ++other)
+            {
+                if (used[other] == false && tiles[i].similarTile(tiles[other], true) == true)
+                {
+                    duplicates.emplace_back(&tiles[other]);
+                    used[other] = true;
+                }
+            }
+            if (duplicates.size() > 1)
+            {
+                duplicatesCollection.emplace_back(std::move(duplicates));
+            }
+        }
+
+        if (duplicatesCollection.size() == 0)
+        {
+            std::cout << "No duplicates of tiles found\n";
+        }
+        else
+        {
+            // Print all duplicates
+            std::cout << "Duplicates of tiles found:\n";
+            for (const auto& dc : duplicatesCollection)
+            {
+                std::cout << "  Similiar tiles (id): ";
+                bool firstId = true;
+                for (const auto& d : dc)
+                {
+                    std::cout << (firstId == true ? "" : ",") << d->id;
+                    firstId = false;
+                }
+                std::cout << std::endl;
+            }
+        }
+    }
+}; // class Solver
+
+const Tile tiles[NumberOfTiles] =
 {
     {0, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Top}, {Edge::Color::Green, Edge::Part::Bottom}}}, // Tile 0 (0,0 on picture)
     {1, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Top}, {Edge::Color::Blue, Edge::Part::Bottom}}}, // Tile 1 (1,0 on picture)
@@ -295,126 +433,20 @@ Tile tiles[NumberOfTiles] =
     {8, {{Edge::Color::Purple, Edge::Part::Bottom}, {Edge::Color::Blue, Edge::Part::Top}, {Edge::Color::Yellow, Edge::Part::Top}, {Edge::Color::Green, Edge::Part::Bottom}}} // Tile 8 (2,2 on picture)
 };
 
-bool used[NumberOfTiles] = { false };
-TileGrid placed;
-
-uint64_t numberOfTestedCombinations = 0;
-bool backtrack(int pos) noexcept
-{
-    if (pos == NumberOfTiles)
-    {       
-        //Add solution to vector
-        solutions.emplace_back(placed);
-        //return true; // If only one solution is needed
-        return false; //To proceed finding the next solution
-    }
-
-    int row = pos / N;
-    int col = pos % N;
-
-    for (int i = 0; i < NumberOfTiles; ++i)
-    {
-        if (used[i]) continue;
-
-        // Try all 4 rotations
-        for (int rot = 0; rot < Tile::NoOfEdges; ++rot)
-        {
-            bool ok = true;
-            // Check left neighbor
-            if (col > 0)
-            {
-                Edge leftNeighborRightEdge = placed[row][col - 1].edges[static_cast<const int>(Tile::EdgeDirection::Right)]; // Neighbor's right
-                Edge myLeft = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Left)];
-                if (leftNeighborRightEdge.matchEdges(myLeft) == false)
-                {
-                    ok = false;
-                }
-            }
-            // Check top neighbor
-            if (row > 0)
-            {
-                Edge topNeighborBottomEdge = placed[row - 1][col].edges[static_cast<const int>(Tile::EdgeDirection::Bottom)]; // Neighbor's bottom
-                Edge myTop = tiles[i].edges[static_cast<const int>(Tile::EdgeDirection::Top)];
-                if (topNeighborBottomEdge.matchEdges(myTop) == false)
-                {
-                    ok = false;
-                }
-            }
-
-            ++numberOfTestedCombinations;
-            
-            if (ok)
-            {
-                placed[row][col] = tiles[i]; // Copy current rotated orientation
-                used[i] = true;
-                if (backtrack(pos + 1))
-                {
-                    return true;
-                }
-                used[i] = false;
-            }
-            // Rotate tile for next try
-            tiles[i].rotate90cw();
-        }
-        // After 4 rotations tile is back to original orientation
-    }
-    return false;
-}
-
-void printDuplicatesOfTiles() noexcept
-{
-    bool used[NumberOfTiles] = { false };
-    std::vector<std::vector<const Tile*>> duplicatesCollection;
-
-    // Find all duplicates and put them in duplicatesCollection
-    for (int i = 0; i < NumberOfTiles - 1; ++i) // -1 since we need at least one more to compare with
-    {
-        std::vector<const Tile*> duplicates{ &tiles[i] }; //Prepare the vector by adding current tile. This will be used in case there are duplicates
-        for (int other = i + 1; other < NumberOfTiles; ++other)
-        {
-            if (used[other] == false && tiles[i].similarTile(tiles[other], true) == true)
-            {
-                duplicates.emplace_back(&tiles[other]);
-                used[other] = true;
-            }
-        }
-        if (duplicates.size() > 1)
-        {
-            duplicatesCollection.emplace_back(std::move(duplicates));
-        }
-    }
-    
-    if (duplicatesCollection.size() == 0)
-    {
-        std::cout << "No duplicates of tiles found\n";
-    }
-    else
-    {
-        // Print all duplicates
-        std::cout << "Duplicates of tiles found:\n";
-        for (const auto& dc : duplicatesCollection)
-        {
-            std::cout << "  Similiar tiles (id): ";
-            bool firstId = true;
-            for (const auto& d : dc)
-            {
-                std::cout << (firstId == true ? "" : ",") << d->id;
-                firstId = false;
-            }
-            std::cout << std::endl;
-        }
-    }
-}
-
 int main()
 {
+    Solver solver(tiles);
+
     auto start_time = std::chrono::high_resolution_clock::now();
-    backtrack(0);
+    solver.solve();
     auto end_time = std::chrono::high_resolution_clock::now();
     
+    Solutions solutions = solver.getSolutions();
+
     std::cout << "In case there are duplicates of tiles the solution will look the same just with the 2 similar tiles swapped\n";
     std::cout << "Lets remove these duplicates\n";
     solutions.removeDuplicatesInSolutions(); // There are 2 similar tiles which then doubles the combinations. Lets remove the duplicate solutions
+    std::cout << "\n\n";
 
     if (solutions.size() > 0)
     {
@@ -430,11 +462,11 @@ int main()
         std::cout << "No solution found with the given tiles.\n";
     }
 
-    std::cout << "Number of tested combinations: " << numberOfTestedCombinations << std::endl;
+    std::cout << "Number of tested combinations: " << solver.getNumberOfTestedCombinations() << std::endl;
     std::cout << "Elapsed time for algorithm: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() << " microseconds\n";
 
     std::cout << std::endl;
-    printDuplicatesOfTiles();
+    solver.printDuplicatesOfTiles();
 
     return 0;
 }

@@ -38,9 +38,9 @@ struct Edge
         return (part == Part::Top) ? "Top" : "Bottom";
     }
 
+    // Match: same color, opposite part (Top vs Bottom)
     bool matchEdges(const Edge& other) const noexcept
     {
-        // Match: same color, opposite part (Top vs Bottom)
         return (color == other.color) && (part != other.part);
     }
 }; // struct Edge
@@ -73,7 +73,8 @@ struct Tile
     //Compare with other tile. To do rotations during compare set rotateDuringCompare to true
     bool similarTile(const Tile& other, bool rotateDuringCompare) const noexcept
     {
-        int noOfRotations = 1;
+        int noOfRotations;
+        
         if (rotateDuringCompare == true)
         {
             noOfRotations = NoOfEdges; // Do rotate of other's edge to test all possible rotations
@@ -106,7 +107,7 @@ struct Tile
 
 static const int N = 3;
 static const int NumberOfTiles = N * N; // Tiles 3x3
-using TileGrid = Tile[N][N];
+using TileGrid = Tile[N][N]; // Type for having the tiles placed
 
 struct TileGridStruct // To be used in vector (since vector cannot handle 2 dimensional arrays as element)
 {
@@ -134,6 +135,7 @@ struct TileGridStruct // To be used in vector (since vector cannot handle 2 dime
         {
             for (int c = 0; c < N; ++c)
             {
+                // Do not rotate when comparing tiles. They have to match without rotating
                 if (tiles[r][c].similarTile(other.tiles[r][c], false) == false)
                 {
                     return false;
@@ -144,7 +146,7 @@ struct TileGridStruct // To be used in vector (since vector cannot handle 2 dime
     }
 
 private:
-    std::string colorCode(Edge::Color c) const noexcept
+    std::string asciiColorCode(Edge::Color c) const noexcept
     {
         switch (c)
         {
@@ -166,7 +168,7 @@ private:
         return "\033[0m";
     }
 
-    std::string resetColor() const noexcept
+    std::string resetAsciiColorCode() const noexcept
     {
         return "\033[0m";
     }
@@ -196,11 +198,11 @@ public:
                     char leftSym = (leftEdge.part == Edge::Part::Bottom) ? '-' : 'O';
 
                     // Colors
-                    std::string topColor = colorCode(topEdge.color);
-                    std::string rightColor = colorCode(rightEdge.color);
-                    std::string bottomColor = colorCode(bottomEdge.color);
-                    std::string leftColor = colorCode(leftEdge.color);
-                    std::string reset = resetColor();
+                    std::string topColor = asciiColorCode(topEdge.color);
+                    std::string rightColor = asciiColorCode(rightEdge.color);
+                    std::string bottomColor = asciiColorCode(bottomEdge.color);
+                    std::string leftColor = asciiColorCode(leftEdge.color);
+                    std::string reset = resetAsciiColorCode();
 
                     // Draw sub-line of this tile (7 chars wide)
                     if (sub == 0) // Top line of tile (Index 0 of 0-4)
@@ -210,7 +212,7 @@ public:
                     else if (sub == 2) // Middle line of tile with symbol (Index 2 of 0-4)
                     {
                         std::cout << " " << leftColor << leftSym << reset
-                            //<< "     "
+                            //<< "     " // Do not print tile id in middle
                             << "  " << t.id << "  " // Print tile id in middle
                             << rightColor << rightSym << reset;
                     }
@@ -258,6 +260,8 @@ public:
 class Solutions : public std::vector<TileGridStruct>
 {
 public:
+    // In case 2 tiles are similar then 2 solutions seem similar with only difference having 2 similar tiles swapped.
+    // This function will remove all these duplicates having similar "looking" solutions
     void removeDuplicatesInSolutions() noexcept
     {
         for (int i = 0; i < this->size() - 1; ++i) // -1 to always have one to compare with
@@ -282,11 +286,12 @@ class Solver
 private:
     Solutions solutions;
 
-    Tile tiles[NumberOfTiles];
-    bool used[NumberOfTiles] = { false };
-    TileGrid placed; // This could be changed to TileGridPtr and only have pointers to the tiles
+    Tile tiles[NumberOfTiles]{};
+    bool used[NumberOfTiles]{};
+    TileGrid placed;
 
     uint64_t numberOfTestedCombinations = 0;
+    
     bool backtrack(int pos) noexcept
     {
         if (pos == NumberOfTiles)
@@ -361,6 +366,8 @@ public:
     void solve()
     {
         solutions.clear();
+        std::fill(std::begin(used), std::end(used), false); // Reset used array to false
+        numberOfTestedCombinations = 0;
         backtrack(0);
     }
 
@@ -374,10 +381,11 @@ public:
         return numberOfTestedCombinations;
     }
 
+    // Find and print duplicates of tiles (if 2 or more tiles are similar includes rotation to compare)
     void printDuplicatesOfTiles() noexcept
     {
-        bool used[NumberOfTiles] = { false };
         std::vector<std::vector<const Tile*>> duplicatesCollection;
+        std::fill(std::begin(used), std::end(used), false); // Reset used array to false
 
         // Find all duplicates and put them in duplicatesCollection
         for (int i = 0; i < NumberOfTiles - 1; ++i) // -1 since we need at least one more to compare with
@@ -385,6 +393,7 @@ public:
             std::vector<const Tile*> duplicates{ &tiles[i] }; //Prepare the vector by adding current tile. This will be used in case there are duplicates
             for (int other = i + 1; other < NumberOfTiles; ++other)
             {
+                // Rotate during comparison since there is no gurantee that they have same orientation
                 if (used[other] == false && tiles[i].similarTile(tiles[other], true) == true)
                 {
                     duplicates.emplace_back(&tiles[other]);
@@ -445,8 +454,9 @@ int main()
 
     std::cout << "In case there are duplicates of tiles the solution will look the same just with the 2 similar tiles swapped\n";
     std::cout << "Lets remove these duplicates\n";
+    std::cout << "Solutions before removal:" << solutions.size() << "\n";
     solutions.removeDuplicatesInSolutions(); // There are 2 similar tiles which then doubles the combinations. Lets remove the duplicate solutions
-    std::cout << "\n\n";
+    std::cout << "Solutions after removal:" << solutions.size() << "\n\n\n";
 
     if (solutions.size() > 0)
     {

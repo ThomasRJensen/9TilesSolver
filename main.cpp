@@ -11,7 +11,7 @@ struct Edge
     Color color;
     Part part;
 
-    bool operator== (const Edge& other) const noexcept
+    bool operator==(const Edge& other) const noexcept
     {
         return (this->color == other.color && this->part == other.part);
     }
@@ -129,6 +129,7 @@ struct TileGridStruct // To be used in vector (since vector cannot handle 2 dime
         }
     }
 
+    // Compare all tiles in grid by edge color and part (ignore tile id)
     bool operator== (const TileGridStruct& other) const noexcept
     {
         for (int r = 0; r < N; ++r)
@@ -264,17 +265,20 @@ public:
     // This function will remove all these duplicates having similar "looking" solutions
     void removeDuplicatesInSolutions() noexcept
     {
-        for (int i = 0; i < this->size() - 1; ++i) // -1 to always have one to compare with
+        if (this->size() > 0)
         {
-            for (int u = i + 1; u < this->size();) // Loop the ones to compare with
+            for (int i = 0; i < this->size() - 1; ++i) // -1 to always have one to compare with
             {
-                if ((*this)[i] == (*this)[u])
+                for (int u = i + 1; u < this->size();) // Loop the ones to compare with
                 {
-                    this->erase(this->begin() + u); // Don't increment u if we erase an element
-                }
-                else
-                {
-                    ++u;
+                    if ((*this)[i] == (*this)[u])
+                    {
+                        this->erase(this->begin() + u); // Don't increment u if we erase an element
+                    }
+                    else
+                    {
+                        ++u;
+                    }
                 }
             }
         }

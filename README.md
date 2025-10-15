@@ -14,7 +14,8 @@ g++ -std=c++17 main.cpp -O2 -o tile_solver
 ./tile_solver
 ```
 
-## Output (only last part of output with 2 of the 16 solutions - since I found no quick way to screen capture the full output):
-<img width="589" height="830" alt="image" src="https://github.com/user-attachments/assets/a3b82b5c-49a9-4fef-b44b-f1bb7838bdd8" />
+## Output (only last part of output with 2 of the 8 solutions - since I found no quick way to screen capture the full output):
+<img width="484" height="882" alt="image" src="https://github.com/user-attachments/assets/23cb87f7-e426-4703-97d6-603a48631fc4" />
+
 
 
